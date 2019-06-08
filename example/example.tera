@@ -1,0 +1,38 @@
+{
+    "_id": "{{ id() }}",
+    "index": {{ index() }},
+    "guid": "{{ uuid() }}",
+    "isActive": {{ bool() }},
+    "balance": "${{ float(start=1000, end=4000) | round(precision=2) }}",
+    "picture": "http://placehold.it/32x32",
+    "age": {{ integer(start=20, end=40) }},
+    "eyeColor": "{{ random(values = ["blue", "brown", "green"]) }}",
+    "name": "{{ name() }}",
+    "company": "{{ company() }}",
+    "email": "{{ email() }}",
+    "phone": "+1 {{ phone() }}",
+    "address": "{{ integer(start=100, end=999) }} {{ street() }}, {{ city() }}, {{ state() }}, {{ zip() }}",
+    "about": "{{ paragraph() }}",
+    "registered": "{{ timestamp() | date(format="%Y-%m-%dT%H:%M:%S") }}",
+    "latitude": {{ latitude() }},
+    "longitude": {{ longitude() }},
+    "tags": [
+        {% for i in range(end=5) %}
+            "{{ word() }}"
+            {% if i != 4 %}
+                ,
+            {% endif %}
+        {% endfor %}
+    ],
+    "friends": [
+        {% for i in range(end=3) %}
+            {
+                "id": "{{ index() }}",
+                "name": "{{ name() }}"
+            }
+            {% if i != 2 %}
+                ,
+            {% endif %}
+        {% endfor %}
+    ]
+}
