@@ -1,13 +1,33 @@
+//! Jen is a utility to generate JSON documents from templates.
+//!
+//! It provides a very easy and quick way to generate test data using
+//! a simple command line API. Jen was written because there are few
+//! good tools for this purpose which work in a terminal. Most are
+//! available via a browser, which severely limits the amount of data
+//! you can feasibly generate.
+//!
+//! The aim of this tool is to be sufficiently fast, whilst providing
+//! various options to make generation more convenient. It was written
+//! to scratch a personal itch, but there's no reason new features can
+//! not be added if requested.
+//!
+//! Most of the underlying tooling is provided via the `Tera` crate
+//! for templating, and the `fake` crate for data construction. Jen
+//! itself is simply a binding around these two crates to provide a
+//! convenience bridge between them. Go check them out!
 #![doc(html_root_url = "https://docs.rs/jen/1.0.0")]
 use clap::{value_t, App, AppSettings, Arg};
 use serde_json::Value;
-use tera::{Context, Tera};
 
-mod addons;
+mod helper;
 
-mod errors;
-use errors::Error;
+mod generator;
+use generator::Generator;
 
+mod error;
+use error::Error;
+
+/// Entry point of Jen.
 fn main() {
     // execute and log errors
     if let Err(e) = run() {
@@ -15,59 +35,58 @@ fn main() {
     }
 }
 
+/// Executes the main tooling of Jen.
 fn run() -> Result<(), Error> {
+    // parse the arguments from the CLI
     let args = build_cli().get_matches();
 
+    // unpack various arguments from the CLI to use later on
     let amount = value_t!(args, "amount", usize).unwrap_or_else(|_| 1);
-
+    let combine = args.is_present("combine");
+    let prettied = args.is_present("pretty");
     let template = args
         .value_of("template")
         .expect("template argument should be provided");
 
-    let mut tera = Tera::default();
+    // construct a new templating instance
+    let generator = Generator::new(template)?;
+    let mut buffer = Vec::with_capacity(amount);
 
-    for (name, addon) in addons::all() {
-        tera.register_function(name, addon);
-    }
+    // fetch some amount of generated data
+    for created in generator.take(amount) {
+        // parse them into JSON, due to the buffer
+        let parsed = serde_json::from_str::<Value>(&created)?;
 
-    tera.add_template_file(template, Some("template"))
-        .map_err(errors::raw)?;
-
-    let combine = args.is_present("combine");
-    let prettied = args.is_present("pretty");
-    let mut buffer = Vec::new();
-
-    for _ in 0..amount {
-        let rendered = tera
-            .render("template", &Context::new())
-            .map_err(errors::raw)?;
-
-        let parsed = serde_json::from_str::<Value>(&rendered)?;
-
+        // append buffer
         if combine {
             buffer.push(parsed);
             continue;
         }
 
+        // formatting for pretty
         let output = if prettied {
             serde_json::to_string_pretty(&parsed)?
         } else {
             serde_json::to_string(&parsed)?
         };
 
+        // write to stdout
         println!("{}", output);
     }
 
     if combine {
+        // formatting for pretty
         let output = if prettied {
             serde_json::to_string_pretty(&buffer)?
         } else {
             serde_json::to_string(&buffer)?
         };
 
+        // write to stdout
         println!("{}", output);
     }
 
+    // done!
     Ok(())
 }
 

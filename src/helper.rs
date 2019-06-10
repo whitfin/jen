@@ -11,10 +11,9 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 static GLOBAL_INDEX: AtomicUsize = AtomicUsize::new(0);
 
-type Args = HashMap<String, Value>;
-type GlobalFn = Box<Fn(Args) -> Result<Value> + Send + Sync>;
+pub type Helper = Box<Fn(HashMap<String, Value>) -> Result<Value> + Send + Sync>;
 
-pub fn all() -> Vec<(&'static str, GlobalFn)> {
+pub fn all() -> Vec<(&'static str, Helper)> {
     vec![
         ("bool", bool()),
         ("city", city()),
@@ -23,7 +22,6 @@ pub fn all() -> Vec<(&'static str, GlobalFn)> {
         ("email", email()),
         ("firstName", first_name()),
         ("float", float()),
-        ("id", id()),
         ("index", index()),
         ("industry", industry()),
         ("integer", integer()),
@@ -31,6 +29,7 @@ pub fn all() -> Vec<(&'static str, GlobalFn)> {
         ("latitude", latitude()),
         ("longitude", longitude()),
         ("name", name()),
+        ("objectId", id()),
         ("paragraph", paragraph()),
         ("phone", phone()),
         ("postcode", postcode()),
@@ -52,7 +51,7 @@ pub fn all() -> Vec<(&'static str, GlobalFn)> {
 
 macro_rules! fake_delegate {
     ($name:ident, $delegate:expr) => {
-        pub fn $name() -> GlobalFn {
+        pub fn $name() -> Helper {
             Box::new(|_| Ok(Value::from($delegate)))
         }
     };
@@ -80,7 +79,7 @@ fake_delegate!(user_agent, fake!(Internet.user_agent));
 // Lorem based information and functionality (random words)
 fake_delegate!(word, fake!(Lorem.word));
 fake_delegate!(sentence, fake!(Lorem.sentence(4, 6)));
-fn paragraph() -> GlobalFn {
+fn paragraph() -> Helper {
     Box::new(|_| {
         let sentences = fake!(Lorem.sentences(7)).join(" ");
         let value = Value::from(sentences);
@@ -99,7 +98,7 @@ fake_delegate!(state_code, fake!(Address.state_abbr));
 fake_delegate!(street, fake!(Address.street_name));
 fake_delegate!(zip, fake!(Address.zip));
 
-fn float() -> GlobalFn {
+fn float() -> Helper {
     Box::new(|args| {
         let lower = args
             .get("start")
@@ -117,7 +116,7 @@ fn float() -> GlobalFn {
     })
 }
 
-fn id() -> GlobalFn {
+fn id() -> Helper {
     Box::new(|_| {
         ObjectId::new()
             .map_err(|_| unreachable!())
@@ -126,7 +125,7 @@ fn id() -> GlobalFn {
     })
 }
 
-fn index() -> GlobalFn {
+fn index() -> Helper {
     Box::new(|_| {
         let idx = GLOBAL_INDEX.fetch_add(1, Ordering::SeqCst);
         let val = Value::from(idx);
@@ -135,7 +134,7 @@ fn index() -> GlobalFn {
     })
 }
 
-fn integer() -> GlobalFn {
+fn integer() -> Helper {
     Box::new(|args| {
         let lower = args
             .get("start")
@@ -153,7 +152,7 @@ fn integer() -> GlobalFn {
     })
 }
 
-fn random() -> GlobalFn {
+fn random() -> Helper {
     Box::new(|mut args| {
         let values = args
             .get_mut("values")
@@ -168,7 +167,7 @@ fn random() -> GlobalFn {
     })
 }
 
-fn timestamp() -> GlobalFn {
+fn timestamp() -> Helper {
     Box::new(|_| {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -182,7 +181,7 @@ fn timestamp() -> GlobalFn {
     })
 }
 
-fn uuid() -> GlobalFn {
+fn uuid() -> Helper {
     Box::new(|_| {
         let uuid = Uuid::new_v4();
         let json = Value::from(uuid.to_string());
