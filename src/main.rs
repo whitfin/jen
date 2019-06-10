@@ -17,8 +17,9 @@
 //! convenience bridge between them. Go check them out!
 #![doc(html_root_url = "https://docs.rs/jen/1.0.0")]
 use clap::{value_t, App, AppSettings, Arg};
-use serde_json::Value;
 
+use serde::Serialize;
+use serde_json::Value;
 mod helper;
 
 mod generator;
@@ -60,30 +61,14 @@ fn run() -> Result<(), Error> {
         // append buffer
         if combine {
             buffer.push(parsed);
-            continue;
-        }
-
-        // formatting for pretty
-        let output = if prettied {
-            serde_json::to_string_pretty(&parsed)?
         } else {
-            serde_json::to_string(&parsed)?
-        };
-
-        // write to stdout
-        println!("{}", output);
+            print(&parsed, prettied)?;
+        }
     }
 
+    // print buffer
     if combine {
-        // formatting for pretty
-        let output = if prettied {
-            serde_json::to_string_pretty(&buffer)?
-        } else {
-            serde_json::to_string(&buffer)?
-        };
-
-        // write to stdout
-        println!("{}", output);
+        print(&buffer, prettied)?;
     }
 
     // done!
@@ -129,4 +114,20 @@ fn build_cli<'a, 'b>() -> App<'a, 'b> {
             AppSettings::ArgRequiredElseHelp,
             AppSettings::HidePossibleValuesInHelp,
         ])
+}
+
+/// Prints a value to stdout, making the output pretty when configured.
+fn print<S: Serialize>(value: &S, prettied: bool) -> Result<(), Error> {
+    // formatting for pretty
+    let output = if prettied {
+        serde_json::to_string_pretty(value)?
+    } else {
+        serde_json::to_string(value)?
+    };
+
+    // write to stdout
+    println!("{}", output);
+
+    // done
+    Ok(())
 }
