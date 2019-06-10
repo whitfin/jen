@@ -16,6 +16,6 @@ pub type Error = failure::Error;
 /// This creates an `Error` using the `Display` trait to generate the
 /// message for the error itself. This handles many CLI based cases.
 #[inline]
-pub fn raw<D: Display>(d: D) -> Error {
+pub(crate) fn raw<D: Display>(d: D) -> Error {
     failure::format_err!("{}", d.to_string())
 }
