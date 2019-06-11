@@ -14,18 +14,7 @@ mod fake;
 /// your own helpers as necessary. In the case of a name clash with
 /// a built-in helper, the behaviour should be deemed undefined.
 pub fn builtin() -> Vec<(&'static str, GlobalFn)> {
-    let mut vec = Vec::new();
-
-    // push all custom helpers
-    for helper in custom::helpers() {
-        vec.push(helper)
-    }
-
-    // push all `fake` helpers
-    for helper in fake::helpers() {
-        vec.push(helper);
-    }
-
-    vec.shrink_to_fit();
+    let mut vec = custom::helpers();
+    vec.append(&mut fake::helpers());
     vec
 }
