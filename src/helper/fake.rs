@@ -4,44 +4,44 @@
 //! the `fake` crate. Almost everything in this module will be
 //! generated via macros to delegate through to that crate.
 use fake::*;
-use serde_json::Value;
-use tera::GlobalFn;
+use tera::{GlobalFn, Result, Value};
+
+use std::collections::HashMap;
 
 /// Returns all helpers constructed using the `fake` package.
 pub fn helpers() -> Vec<(&'static str, GlobalFn)> {
     vec![
-        ("bool", bool()),
-        ("city", city()),
-        ("company", company()),
-        ("domain", domain()),
-        ("email", email()),
-        ("firstName", first_name()),
-        ("industry", industry()),
-        ("lastName", last_name()),
-        ("latitude", latitude()),
-        ("longitude", longitude()),
-        ("name", name()),
-        ("paragraph", paragraph()),
-        ("phone", phone()),
-        ("postcode", postcode()),
-        ("profession", profession()),
-        ("sentence", sentence()),
-        ("state", state()),
-        ("stateCode", state_code()),
-        ("street", street()),
-        ("title", title()),
-        ("userAgent", user_agent()),
-        ("username", username()),
-        ("word", word()),
-        ("zip", zip()),
+        ("bool", Box::new(bool)),
+        ("city", Box::new(city)),
+        ("company", Box::new(company)),
+        ("domain", Box::new(domain)),
+        ("email", Box::new(email)),
+        ("firstName", Box::new(first_name)),
+        ("industry", Box::new(industry)),
+        ("lastName", Box::new(last_name)),
+        ("latitude", Box::new(latitude)),
+        ("longitude", Box::new(longitude)),
+        ("name", Box::new(name)),
+        ("phone", Box::new(phone)),
+        ("postcode", Box::new(postcode)),
+        ("profession", Box::new(profession)),
+        ("sentence", Box::new(sentence)),
+        ("state", Box::new(state)),
+        ("stateCode", Box::new(state_code)),
+        ("street", Box::new(street)),
+        ("title", Box::new(title)),
+        ("userAgent", Box::new(user_agent)),
+        ("username", Box::new(username)),
+        ("word", Box::new(word)),
+        ("zip", Box::new(zip)),
     ]
 }
 
 // Automatic `fake` delegation
 macro_rules! fake_delegate {
     ($name:ident, $delegate:expr) => {
-        fn $name() -> GlobalFn {
-            Box::new(|_| Ok(Value::from($delegate)))
+        fn $name(_args: HashMap<String, Value>) -> Result<Value> {
+            Ok(Value::from($delegate))
         }
     };
 }
@@ -68,14 +68,6 @@ fake_delegate!(user_agent, fake!(Internet.user_agent));
 // Lorem based information and functionality (random words)
 fake_delegate!(word, fake!(Lorem.word));
 fake_delegate!(sentence, fake!(Lorem.sentence(4, 6)));
-fn paragraph() -> GlobalFn {
-    Box::new(|_| {
-        let sentences = fake!(Lorem.sentences(7)).join(" ");
-        let value = Value::from(sentences);
-
-        Ok(value)
-    })
-}
 
 // Location based information and functionality
 fake_delegate!(city, fake!(Address.city));
