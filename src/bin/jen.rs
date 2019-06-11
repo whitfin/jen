@@ -1,32 +1,28 @@
 //! Jen is a utility to generate JSON documents from templates.
 //!
-//! It provides a very easy and quick way to generate test data using
-//! a simple command line API. Jen was written because there are few
-//! good tools for this purpose which work in a terminal. Most are
-//! available via a browser, which severely limits the amount of data
-//! you can feasibly generate.
+//! This module provides a very easy and quick way to generate random
+//! data using a simple command line API. Jen was written because there
+//! are barely any good tools for this purposes which work in a terminal.
+//! Most of the popular options are available via a browser, but this
+//! severely limits the amount of data you can feasibly generate.
 //!
 //! The aim of this tool is to be sufficiently fast, whilst providing
 //! various options to make generation more convenient. It was written
-//! to scratch a personal itch, but there's no reason new features can
-//! not be added if requested.
+//! to scratch a personal itch, but there's no reason why new features
+//! cannot be added if they're requested.
 //!
 //! Most of the underlying tooling is provided via the `Tera` crate
 //! for templating, and the `fake` crate for data construction. Jen
 //! itself is simply a binding around these two crates to provide a
-//! convenience bridge between them. Go check them out!
+//! convenience bridge between them. Go check them out! If you want
+//! more than a CLI, you can also use `jen` programmatically.
 #![doc(html_root_url = "https://docs.rs/jen/1.0.0")]
 use clap::{value_t, App, AppSettings, Arg};
 use serde::Serialize;
 use serde_json::Value;
 
-mod helper;
-
-mod generator;
-use generator::Generator;
-
-mod error;
-use error::Error;
+use jen::error::Error;
+use jen::generator::Generator;
 
 /// Entry point of Jen.
 fn main() {
