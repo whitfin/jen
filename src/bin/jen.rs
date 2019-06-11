@@ -42,6 +42,7 @@ fn run() -> Result<(), Error> {
     // unpack various arguments from the CLI to use later on
     let amount = value_t!(args, "amount", usize).unwrap_or_else(|_| 1);
     let combine = args.is_present("combine");
+    let textual = args.is_present("textual");
     let prettied = args.is_present("pretty");
     let template = args
         .value_of("template")
@@ -57,6 +58,12 @@ fn run() -> Result<(), Error> {
 
     // fetch some amount of generated data
     for created in generator.take(amount) {
+        // raw has no extras
+        if textual {
+            writeln!(stdout, "{}", created)?;
+            continue;
+        }
+
         // parse them into JSON, due to the buffer
         let parsed = serde_json::from_str::<Value>(&created)?;
 
@@ -98,7 +105,7 @@ fn build_cli<'a, 'b>() -> App<'a, 'b> {
                 .default_value("1"),
             // combine: -c, --combine
             Arg::with_name("combine")
-                .help("Whether to combine documents into a JSON array")
+                .help("Whether to combine documents into an array")
                 .short("c")
                 .long("combine"),
             // amount: -p, --pretty
@@ -106,6 +113,11 @@ fn build_cli<'a, 'b>() -> App<'a, 'b> {
                 .help("Whether to pretty print the output documents")
                 .short("p")
                 .long("pretty"),
+            // textual: -t, --textual
+            Arg::with_name("textual")
+                .help("Treat the input as textual, rather than JSON")
+                .short("t")
+                .long("textual"),
             // template: +required
             Arg::with_name("template")
                 .help("Template to control JSON generation")
