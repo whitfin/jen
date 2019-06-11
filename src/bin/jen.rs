@@ -24,6 +24,8 @@ use serde_json::Value;
 use jen::error::Error;
 use jen::generator::Generator;
 
+use std::io::{self, StdoutLock, Write};
+
 /// Entry point of Jen.
 fn main() {
     // execute and log errors
@@ -49,6 +51,10 @@ fn run() -> Result<(), Error> {
     let generator = Generator::new(template)?;
     let mut buffer = Vec::with_capacity(amount);
 
+    // lock stdout for faster writing
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock();
+
     // fetch some amount of generated data
     for created in generator.take(amount) {
         // parse them into JSON, due to the buffer
@@ -58,13 +64,13 @@ fn run() -> Result<(), Error> {
         if combine {
             buffer.push(parsed);
         } else {
-            print(&parsed, prettied)?;
+            print(&mut stdout, &parsed, prettied)?;
         }
     }
 
     // print buffer
     if combine {
-        print(&buffer, prettied)?;
+        print(&mut stdout, &buffer, prettied)?;
     }
 
     // done!
@@ -113,16 +119,17 @@ fn build_cli<'a, 'b>() -> App<'a, 'b> {
 }
 
 /// Prints a value to stdout, making the output pretty when configured.
-fn print<S: Serialize>(value: &S, prettied: bool) -> Result<(), Error> {
+fn print<S: Serialize>(lock: &mut StdoutLock<'_>, value: &S, prettied: bool) -> Result<(), Error> {
     // formatting for pretty
     let output = if prettied {
-        serde_json::to_string_pretty(value)?
+        serde_json::to_vec_pretty(value)?
     } else {
-        serde_json::to_string(value)?
+        serde_json::to_vec(value)?
     };
 
     // write to stdout
-    println!("{}", output);
+    lock.write_all(&output)?;
+    lock.write_all(b"\n")?;
 
     // done
     Ok(())
