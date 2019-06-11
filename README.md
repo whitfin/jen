@@ -45,8 +45,47 @@ in your application when these features are disables.
 
 ### Usage
 
-As there are multiple ways to use Jen, this section will be separated into
-usage via the CLI, as well as usage from inside a Rust application.
+The first step is to construct a template file which Jen will then use when
+generating data.  There are many template helpers provided by default, via
+the internal `jen::helpers` module. You can check the documentation for the
+latest list of helpers, although a fairly up to date table of helpers can
+be found below:
+
+| Helper                                 | Description                                           |
+|----------------------------------------|-------------------------------------------------------|
+| bool()                                 | Generates a random boolean value                      |
+| city()                                 | Generates a random city name                          |
+| company()                              | Generates a random company name                       |
+| domain()                               | Generates a random domain name                        |
+| email()                                | Generates a random email address                      |
+| firstName()                            | Generates a random first name                         |
+| float(start=f64::MIN, end=f64::MAX)    | Generates a random float value between two bounds     |
+| index()                                | Retrieves the current index of the generated document |
+| industry()                             | Generates a random industry type                      |
+| integer(start=i64::MIN, i64::MAX)      | Generates a random integer value between two bounds   |
+| lastName()                             | Generates a random last name                          |
+| latitude()                             | Generates a random latitude location value            |
+| longitude()                            | Generates a random longitude location value           |
+| name()                                 | Generates a random full name                          |
+| objectId()                             | Generates a random object identifier                  |
+| paragraph()                            | Generates a random paragraph of Lorem Ipsum           |
+| phone()                                | Generates a random phone number                       |
+| postcode()                             | Generates a random postcode value                     |
+| profession()                           | Generates a random job profession                     |
+| random(values=["red","blue","yellow"]) | Retrieves a random value from the provided values     |
+| sentence()                             | Generates a random sentence of Lorem Ipsum            |
+| state()                                | Retrieves a random US state name                      |
+| stateCode()                            | Retrieves a random US state code                      |
+| street()                               | Generates a random street name                        |
+| timestamp()                            | Generates a random timestamp value in seconds         |
+| title()                                | Generates a random job title                          |
+| userAgent()                            | Generates a random browser user agent                 |
+| username()                             | Generates a random account username                   |
+| uuid()                                 | Generates a v4 UUID                                   |
+| word()                                 | Retrieves a random word of Lorem Ipsum                |
+| zip()                                  | Generates a random US zip code                        |
+
+Once you have this template, you can either use Jen via the CLI, or programmatically.
 
 #### Command Line
 
@@ -105,7 +144,7 @@ for document in generator.take(5) {
 This will generate five documents from the provided template and print
 them to the terminal.
 
-#### Template Helpers
+### Template Helpers
 
 There are many template helpers provided by default, via the internal `jen::helpers`
 module. You can check the documentation for the latest list of helpers, although a
