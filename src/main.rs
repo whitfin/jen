@@ -17,9 +17,9 @@
 //! convenience bridge between them. Go check them out!
 #![doc(html_root_url = "https://docs.rs/jen/1.0.0")]
 use clap::{value_t, App, AppSettings, Arg};
-
 use serde::Serialize;
 use serde_json::Value;
+
 mod helper;
 
 mod generator;

@@ -5,12 +5,12 @@
 //! `Iterator` trait, so you can easily chain and lazily generate
 //! the amount of data you need.
 use failure::Error;
-use tera::{Context, Tera};
+use tera::{Context, GlobalFn, Tera};
 
 use std::path::Path;
 
 use crate::error;
-use crate::helper::{self, Helper};
+use crate::helper;
 
 /// Simple random (templated) data generator.
 ///
@@ -33,11 +33,11 @@ impl Generator {
     where
         P: AsRef<Path>,
     {
-        Self::new_with_helpers(source, helper::all())
+        Self::new_with_helpers(source, helper::builtin())
     }
 
     /// Constructs a new `Generator` from a template path and set of helpers.
-    pub fn new_with_helpers<P>(source: P, helpers: Vec<(&str, Helper)>) -> Result<Self, Error>
+    pub fn new_with_helpers<P>(source: P, helpers: Vec<(&str, GlobalFn)>) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
