@@ -69,14 +69,13 @@ the following (at the time of writing, there may be more):
 
 ```text
 FLAGS:
-    -c, --combine    Whether to combine documents into a JSON array
     -h, --help       Prints help information
-    -p, --pretty     Whether to pretty print the output documents
-    -r, --raw        Treat the input as textual, rather than JSON
+    -t, --textual    Treat the input as textual, rather than JSON
     -V, --version    Prints version information
 
 OPTIONS:
-    -a, --amount <amount>    The amount of documents to generate in this batch [default: 1]
+    -a, --amount <amount>      The amount of documents to generate in this batch [default: 1]
+    -w, --workers <workers>    Number of threads used to generate data [default: 4]
 ```
 
 The Jen CLI was written under the assumption that you're dealing with JSON
@@ -84,6 +83,11 @@ documents, and most of the options and features revolve around this being
 the case. If you're not using JSON, you can provide the `-r` flag to treat
 the incoming data as "raw". In this case many options will have no effect
 (such as pretty printing), but templating can still be carried out properly.
+
+During development, Jen had options to combined and prettify JSON inputs.
+This was removed to keep things simple, and to allow Jen to support more
+input types. Instead it is recommended to use [jq](https://stedolan.github.io/jq/)
+for these purposes.
 
 For a complete and up to date list of options, please use `jen -h` in your
 terminal.
