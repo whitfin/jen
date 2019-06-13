@@ -24,7 +24,9 @@ use serde_json::Value;
 use jen::error::Error;
 use jen::generator::Generator;
 
-use std::io::{self, StdoutLock, Write};
+use std::io::{self, Write};
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 /// Entry point of Jen.
 fn main() {
@@ -41,43 +43,85 @@ fn run() -> Result<(), Error> {
 
     // unpack various arguments from the CLI to use later on
     let amount = value_t!(args, "amount", usize).unwrap_or_else(|_| 1);
+    let threads = value_t!(args, "workers", usize).unwrap_or_else(|_| 4);
     let combine = args.is_present("combine");
     let textual = args.is_present("textual");
     let prettied = args.is_present("pretty");
     let template = args
         .value_of("template")
-        .expect("template argument should be provided");
+        .expect("template argument should be provided")
+        .to_owned();
 
-    // construct a new templating instance
-    let generator = Generator::new(template)?;
-    let mut buffer = Vec::with_capacity(amount);
+    // construct a new buffer instance
+    let buffer = Vec::with_capacity(amount);
+    let buffer = Mutex::new(buffer);
+    let buffer = Arc::new(buffer);
 
-    // lock stdout for faster writing
-    let stdout = io::stdout();
-    let mut stdout = stdout.lock();
+    // calculate options for threading
+    let total = amount / threads;
+    let offset = amount % threads;
 
-    // fetch some amount of generated data
-    for created in generator.take(amount) {
-        // raw has no extras
-        if textual {
-            writeln!(stdout, "{}", created)?;
-            continue;
-        }
+    // allocate vectors to store amount offsets
+    let mut amounts = Vec::with_capacity(threads);
 
-        // parse them into JSON, due to the buffer
-        let parsed = serde_json::from_str::<Value>(&created)?;
+    // handle all remainders
+    for _ in 0..offset {
+        amounts.push(total + 1);
+    }
 
-        // append buffer
-        if combine {
-            buffer.push(parsed);
-        } else {
-            print(&mut stdout, &parsed, prettied)?;
-        }
+    // push the total up to limit
+    while amounts.len() < threads {
+        amounts.push(total);
+    }
+
+    // spawn all workers
+    let workers = amounts
+        .into_iter()
+        .map(|amount| {
+            // clone the state for ownership
+            let buffer = buffer.clone();
+            let template = template.clone();
+
+            // spawn a thread to generate a batch
+            thread::spawn(move || -> Result<(), Error> {
+                // construct a new generator on the thread
+                let generator = Generator::new(template)?;
+
+                // fetch some amount of generated data
+                for created in generator.take(amount) {
+                    // raw has no extras
+                    if textual {
+                        println!("{}", created);
+                        continue;
+                    }
+
+                    // parse them into JSON, due to the buffer
+                    let parsed = serde_json::from_str::<Value>(&created)?;
+
+                    // append buffer
+                    if combine {
+                        buffer.lock().unwrap().push(parsed);
+                    } else {
+                        print(&parsed, prettied)?;
+                    }
+                }
+
+                // done!
+                Ok(())
+            })
+        })
+        .collect::<Vec<_>>();
+
+    // join all worker threads
+    for worker in workers {
+        worker.join().unwrap()?;
     }
 
     // print buffer
     if combine {
-        print(&mut stdout, &buffer, prettied)?;
+        let buffer = Arc::try_unwrap(buffer).expect("able to take Arc");
+        let buffer = buffer.into_inner().expect("able to take Mutex");
+        print(&buffer, prettied)?;
     }
 
     // done!
@@ -118,6 +162,13 @@ fn build_cli<'a, 'b>() -> App<'a, 'b> {
                 .help("Treat the input as textual, rather than JSON")
                 .short("t")
                 .long("textual"),
+            // workers: -w, --workers [4]
+            Arg::with_name("workers")
+                .help("Number of threads used to generate data")
+                .short("w")
+                .long("workers")
+                .takes_value(true)
+                .default_value("4"),
             // template: +required
             Arg::with_name("template")
                 .help("Template to control JSON generation")
@@ -131,7 +182,7 @@ fn build_cli<'a, 'b>() -> App<'a, 'b> {
 }
 
 /// Prints a value to stdout, making the output pretty when configured.
-fn print<S: Serialize>(lock: &mut StdoutLock<'_>, value: &S, prettied: bool) -> Result<(), Error> {
+fn print<S: Serialize>(value: &S, prettied: bool) -> Result<(), Error> {
     // formatting for pretty
     let output = if prettied {
         serde_json::to_vec_pretty(value)?
@@ -139,9 +190,13 @@ fn print<S: Serialize>(lock: &mut StdoutLock<'_>, value: &S, prettied: bool) -> 
         serde_json::to_vec(value)?
     };
 
+    // lock stdout for writing
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock();
+
     // write to stdout
-    lock.write_all(&output)?;
-    lock.write_all(b"\n")?;
+    stdout.write_all(&output)?;
+    stdout.write_all(b"\n")?;
 
     // done
     Ok(())
