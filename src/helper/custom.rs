@@ -68,7 +68,7 @@ fn integer(args: HashMap<String, Value>) -> Result<Value> {
     let upper = args
         .get("end")
         .and_then(|value| value.as_i64())
-        .unwrap_or(std::i64::MIN);
+        .unwrap_or(std::i64::MAX);
 
     let value = fake!(Number.between(lower, upper));
     let value = Value::from(value);
