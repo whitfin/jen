@@ -129,7 +129,7 @@ documentation uploaded to Crates.io for an up-to-date listing.
 | float(start=f64::MIN, end=f64::MAX)    | Generates a random float value between two bounds     |
 | index()                                | Retrieves the current index of the generated document |
 | industry()                             | Generates a random industry type                      |
-| integer(start=i64::MIN, i64::MAX)      | Generates a random integer value between two bounds   |
+| integer(start=i64::MIN, end=i64::MAX)  | Generates a random integer value between two bounds   |
 | lastName()                             | Generates a random last name                          |
 | latitude()                             | Generates a random latitude location value            |
 | longitude()                            | Generates a random longitude location value           |
