@@ -36,7 +36,7 @@ as a dependency of your application:
 
 ```toml
 [dependencies]
-jen = { version = "1.0", default-features = false }
+jen = { version = "1.1", default-features = false }
 ```
 
 You should disable the default features as it includes several dependencies
