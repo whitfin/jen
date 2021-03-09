@@ -24,7 +24,7 @@ build = ["clap", "serde", "serde_json"]
 
 [dependencies]
 failure = "0.1"
-tera = "0.11"
+tera = "1.7"
 
 # addon dependencies
 fake = "1.3"

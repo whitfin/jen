@@ -1,8 +1,9 @@
 //! Helper definitions provided by custom implementation.
+use super::BoxedHelper;
 use fake::fake;
 use objectid::ObjectId;
 use rand::Rng;
-use tera::{GlobalFn, Result, Value};
+use tera::{Result, Value};
 use uuid::Uuid;
 
 use std::collections::HashMap;
@@ -13,7 +14,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 static GLOBAL_INDEX: AtomicUsize = AtomicUsize::new(0);
 
 /// Returns various custom helpers across various domains.
-pub fn helpers() -> Vec<(&'static str, GlobalFn)> {
+pub fn helpers() -> Vec<(&'static str, BoxedHelper)> {
     vec![
         ("float", Box::new(float)),
         ("index", Box::new(index)),
@@ -31,7 +32,7 @@ pub fn helpers() -> Vec<(&'static str, GlobalFn)> {
 /// The bounds can be provided via the "start" and "end" arguments
 /// in the provided mapping. If not provided, these values will be
 /// set to `f64::MIN` and `f64::MAX`.
-fn float(args: HashMap<String, Value>) -> Result<Value> {
+fn float(args: &HashMap<String, Value>) -> Result<Value> {
     let lower = args
         .get("start")
         .and_then(|value| value.as_f64())
@@ -48,7 +49,7 @@ fn float(args: HashMap<String, Value>) -> Result<Value> {
 }
 
 /// Returns the current document index based on the generated data.
-fn index(_args: HashMap<String, Value>) -> Result<Value> {
+fn index(_args: &HashMap<String, Value>) -> Result<Value> {
     let idx = GLOBAL_INDEX.fetch_add(1, Ordering::SeqCst);
     let val = Value::from(idx);
 
@@ -60,7 +61,7 @@ fn index(_args: HashMap<String, Value>) -> Result<Value> {
 /// The bounds can be provided via the "start" and "end" arguments
 /// in the provided mapping. If not provided, these values will be
 /// set to `i64::MIN` and `i64::MAX`.
-fn integer(args: HashMap<String, Value>) -> Result<Value> {
+fn integer(args: &HashMap<String, Value>) -> Result<Value> {
     let lower = args
         .get("start")
         .and_then(|value| value.as_i64())
@@ -77,7 +78,7 @@ fn integer(args: HashMap<String, Value>) -> Result<Value> {
 }
 
 /// Generates an object identifier as a `String`.
-fn object_id(_args: HashMap<String, Value>) -> Result<Value> {
+fn object_id(_args: &HashMap<String, Value>) -> Result<Value> {
     ObjectId::new()
         .map_err(|_| unreachable!())
         .map(|id| id.to_string())
@@ -88,7 +89,7 @@ fn object_id(_args: HashMap<String, Value>) -> Result<Value> {
 ///
 /// This is generally sourced by the `fake` crate, but lives
 /// in this module as it's more than just a simple delegate.
-fn paragraph(_args: HashMap<String, Value>) -> Result<Value> {
+fn paragraph(_args: &HashMap<String, Value>) -> Result<Value> {
     let sentences = fake!(Lorem.sentences(7)).join(" ");
     let value = Value::from(sentences);
 
@@ -99,15 +100,15 @@ fn paragraph(_args: HashMap<String, Value>) -> Result<Value> {
 ///
 /// Values must be provided via the "values" argument. If no
 /// values are provided, this function will panic.
-fn random(mut args: HashMap<String, Value>) -> Result<Value> {
+fn random(args: &HashMap<String, Value>) -> Result<Value> {
     let values = args
-        .get_mut("values")
+        .get("values")
         .expect("must provide values alongside random")
-        .as_array_mut()
+        .as_array()
         .expect("must provide values alongside random");
 
     let rng = rand::thread_rng().gen_range(0..values.len());
-    let val = values[rng].take();
+    let val = values[rng].to_owned();
 
     Ok(val)
 }
@@ -116,20 +117,20 @@ fn random(mut args: HashMap<String, Value>) -> Result<Value> {
 ///
 /// This is very similar to `integer`, except that the upper
 /// bound is automatically set to the current timestamp.
-fn timestamp(mut args: HashMap<String, Value>) -> Result<Value> {
+fn timestamp(_args: &HashMap<String, Value>) -> Result<Value> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards")
         .as_secs();
 
-    args.insert("start".to_owned(), Value::from(0));
-    args.insert("end".to_owned(), Value::from(now));
+    let value = fake!(Number.between(0, now));
+    let value = Value::from(value);
 
-    integer(args)
+    Ok(value)
 }
 
 /// Generates a random UUID v4 as a hexidecimal `String`.
-fn uuid(_args: HashMap<String, Value>) -> Result<Value> {
+fn uuid(_args: &HashMap<String, Value>) -> Result<Value> {
     let uuid = Uuid::new_v4();
     let json = Value::from(uuid.to_string());
 

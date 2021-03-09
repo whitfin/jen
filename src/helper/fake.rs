@@ -3,13 +3,14 @@
 //! This is a central point for all helpers constructed using
 //! the `fake` crate. Almost everything in this module will be
 //! generated via macros to delegate through to that crate.
+use super::BoxedHelper;
 use fake::*;
-use tera::{GlobalFn, Result, Value};
+use tera::{Result, Value};
 
 use std::collections::HashMap;
 
 /// Returns all helpers constructed using the `fake` package.
-pub fn helpers() -> Vec<(&'static str, GlobalFn)> {
+pub fn helpers() -> Vec<(&'static str, BoxedHelper)> {
     vec![
         ("bool", Box::new(bool)),
         ("city", Box::new(city)),
@@ -40,7 +41,7 @@ pub fn helpers() -> Vec<(&'static str, GlobalFn)> {
 // Automatic `fake` delegation
 macro_rules! fake_delegate {
     ($name:ident, $delegate:expr) => {
-        fn $name(_args: HashMap<String, Value>) -> Result<Value> {
+        fn $name(_args: &HashMap<String, Value>) -> Result<Value> {
             Ok(Value::from($delegate))
         }
     };
