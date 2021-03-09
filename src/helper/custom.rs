@@ -106,7 +106,7 @@ fn random(mut args: HashMap<String, Value>) -> Result<Value> {
         .as_array_mut()
         .expect("must provide values alongside random");
 
-    let rng = rand::thread_rng().gen_range(0, values.len());
+    let rng = rand::thread_rng().gen_range(0..values.len());
     let val = values[rng].take();
 
     Ok(val)
