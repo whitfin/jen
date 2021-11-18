@@ -12,6 +12,9 @@ mod fake;
 /// Public type for a boxed helper definition for `Function` conversion.
 pub type BoxedHelper = Box<dyn Fn(&HashMap<String, Value>) -> Result<Value> + Sync + Send>;
 
+/// Public type for helpers during `Generator` creation.
+pub type BoxedHelpers<'a> = Vec<(&'a str, BoxedHelper)>;
+
 /// Returns a named vector containing named helper pairs.
 ///
 /// This function returns all built-in helpers, so you can append

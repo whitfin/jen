@@ -102,7 +102,7 @@ Generators are constructed using a path to a template on disk, and you
 then generate documents using the `Iterator` methods, as shown below.
 
 ```rust
-let mut generator = Generator::new("./example/example.tera")
+let mut generator = Generator::load("./example/example.tera")
     .expect("provided a value template");
 
 for document in generator.take(5) {

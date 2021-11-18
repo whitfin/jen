@@ -75,7 +75,7 @@ fn run() -> Result<(), Error> {
             // spawn a thread to generate a batch
             thread::spawn(move || -> Result<(), Error> {
                 // construct a new generator on the thread
-                let generator = Generator::new(template)?;
+                let generator = Generator::from_path(template)?;
 
                 // fetch some amount of generated data
                 for created in generator.take(amount) {
