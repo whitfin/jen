@@ -37,11 +37,13 @@ fn main() {
 /// Executes the main tooling of Jen.
 fn run() -> Result<(), Error> {
     // parse the arguments from the CLI
-    let args = build_cli().get_matches();
+    let cpus = num_cpus::get();
+    let core = cpus.to_string();
+    let args = build_cli(&core).get_matches();
 
     // unpack various arguments from the CLI to use later on
     let amount = value_t!(args, "amount", usize).unwrap_or_else(|_| 1);
-    let threads = value_t!(args, "workers", usize).unwrap_or_else(|_| 4);
+    let threads = value_t!(args, "workers", usize).unwrap_or_else(|_| cpus);
     let textual = args.is_present("textual");
     let template = args
         .value_of("template")
@@ -117,7 +119,7 @@ fn run() -> Result<(), Error> {
 ///
 /// All command line usage information can be found in the definitions
 /// below, and follows the API of the `clap` library.
-fn build_cli<'a, 'b>() -> App<'a, 'b> {
+fn build_cli<'a, 'b>(cpus: &'a str) -> App<'a, 'b> {
     App::new("")
         // package metadata from cargo
         .name(env!("CARGO_PKG_NAME"))
@@ -143,7 +145,7 @@ fn build_cli<'a, 'b>() -> App<'a, 'b> {
                 .short("w")
                 .long("workers")
                 .takes_value(true)
-                .default_value("4"),
+                .default_value(cpus),
             // template: +required
             Arg::with_name("template")
                 .help("Template to control JSON generation")
