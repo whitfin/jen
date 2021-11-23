@@ -1,6 +1,6 @@
 [package]
 name = "jen"
-version = "1.2.0" # remember to update html_root_url
+version = "1.2.1" # remember to update html_root_url
 authors = ["Isaac Whitfield <iw@whitfin.io>"]
 description = "A simple JSON generator CLI tool for creating large datasets."
 repository = "https://github.com/whitfin/jen"
