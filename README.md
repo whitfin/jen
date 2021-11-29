@@ -74,7 +74,7 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-    -a, --amount <amount>      The amount of documents to generate in this batch [default: 1]
+    -l, --limit <limit>        An upper limit of documents to generate [default: none]
     -w, --workers <workers>    Number of threads used to generate data [default: 4]
 ```
 
