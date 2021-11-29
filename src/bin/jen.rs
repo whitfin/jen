@@ -25,7 +25,7 @@ use jen::error::Error;
 use jen::generator::Generator;
 
 use std::io::{self, Write};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use std::thread;
 
 /// Entry point of Jen.
@@ -53,7 +53,7 @@ fn run() -> Result<(), Error> {
         .to_owned();
 
     // create a tracker used to keep counts
-    let tracker = Arc::new(Mutex::new(0));
+    let tracker = Arc::new(RwLock::new(0));
 
     // create all workers across multiple threads
     let workers = (0..threads).map(move |_| {
@@ -65,6 +65,13 @@ fn run() -> Result<(), Error> {
         thread::spawn(move || -> Result<(), Error> {
             // construct a new generator on the thread
             let mut generator = Generator::from_path(template)?;
+
+            // check we don't over do it
+            if let Some(limit) = limit {
+                if *tracker.read().unwrap() >= limit {
+                    return Ok(());
+                }
+            }
 
             loop {
                 // fetch some amount of generated data from the generator
@@ -89,7 +96,7 @@ fn run() -> Result<(), Error> {
                 stdout.write_all(b"\n")?;
 
                 // lock the tracker for the time being
-                let mut counter = tracker.lock().unwrap();
+                let mut counter = tracker.write().unwrap();
 
                 // increment the counter
                 *counter += 1;
