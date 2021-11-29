@@ -17,7 +17,7 @@
 //! convenience bridge between them. Go check them out! If you want
 //! more than a CLI, you can also use `jen` programmatically.
 #![allow(clippy::mutex_atomic)]
-#![doc(html_root_url = "https://docs.rs/jen/1.0.0")]
+#![doc(html_root_url = "https://docs.rs/jen/1.3.0")]
 use clap::{value_t, App, AppSettings, Arg};
 use serde_json::Value;
 
