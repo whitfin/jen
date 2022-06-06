@@ -68,21 +68,27 @@ There are various switches you can provide to adjust the output, including
 the following (at the time of writing, there may be more):
 
 ```text
+USAGE:
+    jen [FLAGS] [OPTIONS] <template>
+
 FLAGS:
     -h, --help       Prints help information
     -t, --textual    Treat the input as textual, rather than JSON
     -V, --version    Prints version information
 
 OPTIONS:
-    -l, --limit <limit>        An upper limit of documents to generate [default: none]
-    -w, --workers <workers>    Number of threads used to generate data [default: 4]
+    -l, --limit <limit>        An upper limit of documents to generate
+    -w, --workers <workers>    Number of threads used to generate data [default: 16]
+
+ARGS:
+    <template>    Template to control JSON generation
 ```
 
 The Jen CLI was written under the assumption that you're dealing with JSON
 documents, and most of the options and features revolve around this being
-the case. If you're not using JSON, you can provide the `-r` flag to treat
-the incoming data as "raw". In this case many options will have no effect
-(such as pretty printing), but templating can still be carried out properly.
+the case. If you're not using JSON, you can provide the `-t` flag to treat
+the incoming data as textual. In this case some options may have no effect,
+but templating can still be carried out properly.
 
 During development, Jen had options to combined and prettify JSON inputs.
 This was removed to keep things simple, and to allow Jen to support more
