@@ -16,7 +16,6 @@
 //! itself is simply a binding around these two crates to provide a
 //! convenience bridge between them. Go check them out! If you want
 //! more than a CLI, you can also use `jen` programmatically.
-#![allow(clippy::mutex_atomic)]
 #![doc(html_root_url = "https://docs.rs/jen/1.3.1")]
 use clap::{value_t, App, AppSettings, Arg};
 use serde_json::Value;
@@ -77,7 +76,22 @@ fn run() -> Result<(), Error> {
                 // fetch some amount of generated data from the generator
                 let created = generator.next().expect("unable to generate");
 
-                // raw has no extras
+                {
+                    // lock the tracker for the time being
+                    let mut counter = tracker.write().unwrap();
+
+                    // check the limit before we write
+                    if let Some(limit) = limit {
+                        if *counter >= limit {
+                            return Ok(());
+                        }
+                    }
+
+                    // increment the counter
+                    *counter += 1;
+                }
+
+                // no extras
                 if textual {
                     println!("{}", created);
                     continue;
@@ -94,18 +108,6 @@ fn run() -> Result<(), Error> {
                 // write to stdout
                 stdout.write_all(&output)?;
                 stdout.write_all(b"\n")?;
-
-                // lock the tracker for the time being
-                let mut counter = tracker.write().unwrap();
-
-                // increment the counter
-                *counter += 1;
-
-                if let Some(limit) = limit {
-                    if *counter >= limit {
-                        return Ok(());
-                    }
-                }
             }
         })
     });
