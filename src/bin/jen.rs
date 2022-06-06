@@ -38,13 +38,11 @@ fn main() {
 /// Executes the main tooling of Jen.
 fn run() -> Result<(), Error> {
     // parse the arguments from the CLI
-    let cpus = num_cpus::get();
-    let core = cpus.to_string();
-    let args = build_cli(&core).get_matches();
+    let args = build_cli().get_matches();
 
     // unpack various arguments from the CLI to use later on
     let limit = value_t!(args, "limit", usize).ok();
-    let threads = value_t!(args, "workers", usize).unwrap_or_else(|_| cpus);
+    let threads = value_t!(args, "workers", usize).unwrap_or_else(|_| 1);
     let textual = args.is_present("textual");
     let template = args
         .value_of("template")
@@ -125,7 +123,7 @@ fn run() -> Result<(), Error> {
 ///
 /// All command line usage information can be found in the definitions
 /// below, and follows the API of the `clap` library.
-fn build_cli<'a, 'b>(cpus: &'a str) -> App<'a, 'b> {
+fn build_cli<'a, 'b>() -> App<'a, 'b> {
     App::new("")
         // package metadata from cargo
         .name(env!("CARGO_PKG_NAME"))
@@ -144,13 +142,13 @@ fn build_cli<'a, 'b>(cpus: &'a str) -> App<'a, 'b> {
                 .help("Treat the input as textual, rather than JSON")
                 .short("t")
                 .long("textual"),
-            // workers: -w, --workers [4]
+            // workers: -w, --workers [1]
             Arg::with_name("workers")
                 .help("Number of threads used to generate data")
                 .short("w")
                 .long("workers")
                 .takes_value(true)
-                .default_value(cpus),
+                .default_value("1"),
             // template: +required
             Arg::with_name("template")
                 .help("Template to control JSON generation")
