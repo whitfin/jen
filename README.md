@@ -41,7 +41,7 @@ jen = { version = "1.1", default-features = false }
 
 You should disable the default features as it includes several dependencies
 which are required for the CLI use case. These dependencies are not included
-in your application when these features are disables.
+in your application when these features are disabled.
 
 ### Usage
 
