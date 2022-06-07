@@ -14,7 +14,7 @@
 //! itself is simply a binding around these two crates to provide a
 //! convenience bridge between them. Go check them out!
 #![allow(clippy::unnecessary_wraps)]
-#![doc(html_root_url = "https://docs.rs/jen/1.4.0")]
+#![doc(html_root_url = "https://docs.rs/jen/1.5.0")]
 pub mod error;
 pub mod generator;
 pub mod helper;

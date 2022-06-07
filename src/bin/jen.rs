@@ -16,8 +16,8 @@
 //! itself is simply a binding around these two crates to provide a
 //! convenience bridge between them. Go check them out! If you want
 //! more than a CLI, you can also use `jen` programmatically.
-#![doc(html_root_url = "https://docs.rs/jen/1.4.0")]
-use clap::{value_t, App, AppSettings, Arg};
+#![doc(html_root_url = "https://docs.rs/jen/1.5.0")]
+use clap::{Arg, Command};
 use serde_json::Value;
 
 use jen::error::Error;
@@ -38,7 +38,7 @@ fn run() -> Result<(), Error> {
     let args = build_cli().get_matches();
 
     // unpack various arguments from the CLI to use later on
-    let limit = value_t!(args, "limit", usize).ok();
+    let limit = args.value_of_t("limit").ok();
     let textual = args.is_present("textual");
     let template = args
         .value_of("template")
@@ -88,8 +88,8 @@ fn run() -> Result<(), Error> {
 ///
 /// All command line usage information can be found in the definitions
 /// below, and follows the API of the `clap` library.
-fn build_cli<'a, 'b>() -> App<'a, 'b> {
-    App::new("")
+fn build_cli<'a>() -> Command<'a> {
+    Command::new("")
         // package metadata from cargo
         .name(env!("CARGO_PKG_NAME"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
@@ -97,24 +97,22 @@ fn build_cli<'a, 'b>() -> App<'a, 'b> {
         // add the template arguments
         .args(&[
             // limit: -l, --limit [1]
-            Arg::with_name("limit")
+            Arg::new("limit")
                 .help("An upper limit of documents to generate")
-                .short("l")
+                .short('l')
                 .long("limit")
                 .takes_value(true),
             // textual: -t, --textual
-            Arg::with_name("textual")
+            Arg::new("textual")
                 .help("Treat the input as textual, without JSON detection")
-                .short("t")
+                .short('t')
                 .long("textual"),
             // template: +required
-            Arg::with_name("template")
+            Arg::new("template")
                 .help("Template to control generation format")
                 .required(true),
         ])
         // settings required for parsing
-        .settings(&[
-            AppSettings::ArgRequiredElseHelp,
-            AppSettings::HidePossibleValuesInHelp,
-        ])
+        .arg_required_else_help(true)
+        .hide_possible_values(true)
 }
