@@ -27,7 +27,6 @@ use std::io::{self, Write};
 
 /// Entry point of Jen.
 fn main() {
-    // execute and log errors
     if let Err(e) = run() {
         eprintln!("{}", e);
     }
@@ -46,8 +45,12 @@ fn run() -> Result<(), Error> {
         .expect("template argument should be provided")
         .to_owned();
 
-    // create a tracker used to keep counts
-    let mut tracker = 0;
+    // limit counter
+    let mut counter = 0;
+
+    // lock stdout for writing
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock();
 
     // construct a new generator on the thread
     let mut generator = Generator::from_path(template)?;
@@ -56,33 +59,26 @@ fn run() -> Result<(), Error> {
         // fetch some amount of generated data from the generator
         let created = generator.next().expect("unable to generate");
 
-        // check the limit before we write
+        // attempt to detect JSON values and compact them
+        let output = (!textual)
+            .then(|| &created)
+            .and_then(|created| serde_json::from_str::<Value>(created).ok())
+            .and_then(|parsed| serde_json::to_vec(&parsed).ok())
+            .unwrap_or_else(|| created.into_bytes());
+
+        // write entry to stdout
+        stdout.write_all(&output)?;
+        stdout.write_all(b"\n")?;
+
+        // keep track
+        counter += 1;
+
+        // check the limit before next
         if let Some(limit) = limit {
-            if tracker >= limit {
+            if counter >= limit {
                 return Ok(());
             }
         }
-
-        // increment the counter
-        tracker += 1;
-
-        // no extras
-        if textual {
-            println!("{}", created);
-            continue;
-        }
-
-        // compact the JSON to reduce any template based whitespace
-        let parsed = serde_json::from_str::<Value>(&created)?;
-        let output = serde_json::to_vec(&parsed)?;
-
-        // lock stdout for writing
-        let stdout = io::stdout();
-        let mut stdout = stdout.lock();
-
-        // write to stdout
-        stdout.write_all(&output)?;
-        stdout.write_all(b"\n")?;
     }
 }
 
@@ -106,12 +102,12 @@ fn build_cli<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true),
             // textual: -t, --textual
             Arg::with_name("textual")
-                .help("Treat the input as textual, rather than JSON")
+                .help("Treat the input as textual, without JSON detection")
                 .short("t")
                 .long("textual"),
             // template: +required
             Arg::with_name("template")
-                .help("Template to control JSON generation")
+                .help("Template to control generation format")
                 .required(true),
         ])
         // settings required for parsing
