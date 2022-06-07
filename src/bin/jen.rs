@@ -52,19 +52,14 @@ fn run() -> Result<(), Error> {
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
 
-    // construct a new generator on the thread
-    let mut generator = Generator::from_path(template)?;
-
-    loop {
-        // fetch some amount of generated data from the generator
-        let created = generator.next().expect("unable to generate");
-
+    // construct a new generator to pull back from
+    for document in Generator::from_path(template)? {
         // attempt to detect JSON values and compact them
         let output = (!textual)
-            .then(|| &created)
+            .then(|| &document)
             .and_then(|created| serde_json::from_str::<Value>(created).ok())
             .and_then(|parsed| serde_json::to_vec(&parsed).ok())
-            .unwrap_or_else(|| created.into_bytes());
+            .unwrap_or_else(|| document.into_bytes());
 
         // write entry to stdout
         stdout.write_all(&output)?;
@@ -76,10 +71,13 @@ fn run() -> Result<(), Error> {
         // check the limit before next
         if let Some(limit) = limit {
             if counter >= limit {
-                return Ok(());
+                break;
             }
         }
     }
+
+    // never
+    Ok(())
 }
 
 /// Creates a parser to deal with all CLI interaction.
