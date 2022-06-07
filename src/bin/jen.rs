@@ -24,8 +24,6 @@ use jen::error::Error;
 use jen::generator::Generator;
 
 use std::io::{self, Write};
-use std::sync::{Arc, RwLock};
-use std::thread;
 
 /// Entry point of Jen.
 fn main() {
@@ -42,7 +40,6 @@ fn run() -> Result<(), Error> {
 
     // unpack various arguments from the CLI to use later on
     let limit = value_t!(args, "limit", usize).ok();
-    let threads = value_t!(args, "workers", usize).unwrap_or_else(|_| 1);
     let textual = args.is_present("textual");
     let template = args
         .value_of("template")
@@ -50,73 +47,43 @@ fn run() -> Result<(), Error> {
         .to_owned();
 
     // create a tracker used to keep counts
-    let tracker = Arc::new(RwLock::new(0));
+    let mut tracker = 0;
 
-    // create all workers across multiple threads
-    let workers = (0..threads).map(move |_| {
-        // clone the state for ownership
-        let tracker = tracker.clone();
-        let template = template.clone();
+    // construct a new generator on the thread
+    let mut generator = Generator::from_path(template)?;
 
-        // spawn a thread to generate a batch
-        thread::spawn(move || -> Result<(), Error> {
-            // construct a new generator on the thread
-            let mut generator = Generator::from_path(template)?;
+    loop {
+        // fetch some amount of generated data from the generator
+        let created = generator.next().expect("unable to generate");
 
-            // check we don't over do it
-            if let Some(limit) = limit {
-                if *tracker.read().unwrap() >= limit {
-                    return Ok(());
-                }
+        // check the limit before we write
+        if let Some(limit) = limit {
+            if tracker >= limit {
+                return Ok(());
             }
+        }
 
-            loop {
-                // fetch some amount of generated data from the generator
-                let created = generator.next().expect("unable to generate");
+        // increment the counter
+        tracker += 1;
 
-                {
-                    // lock the tracker for the time being
-                    let mut counter = tracker.write().unwrap();
+        // no extras
+        if textual {
+            println!("{}", created);
+            continue;
+        }
 
-                    // check the limit before we write
-                    if let Some(limit) = limit {
-                        if *counter >= limit {
-                            return Ok(());
-                        }
-                    }
+        // compact the JSON to reduce any template based whitespace
+        let parsed = serde_json::from_str::<Value>(&created)?;
+        let output = serde_json::to_vec(&parsed)?;
 
-                    // increment the counter
-                    *counter += 1;
-                }
+        // lock stdout for writing
+        let stdout = io::stdout();
+        let mut stdout = stdout.lock();
 
-                // no extras
-                if textual {
-                    println!("{}", created);
-                    continue;
-                }
-
-                // compact the JSON to reduce any template based whitespace
-                let parsed = serde_json::from_str::<Value>(&created)?;
-                let output = serde_json::to_vec(&parsed)?;
-
-                // lock stdout for writing
-                let stdout = io::stdout();
-                let mut stdout = stdout.lock();
-
-                // write to stdout
-                stdout.write_all(&output)?;
-                stdout.write_all(b"\n")?;
-            }
-        })
-    });
-
-    // join all worker threads
-    for worker in workers {
-        worker.join().unwrap()?;
+        // write to stdout
+        stdout.write_all(&output)?;
+        stdout.write_all(b"\n")?;
     }
-
-    // done!
-    Ok(())
 }
 
 /// Creates a parser to deal with all CLI interaction.
@@ -142,13 +109,6 @@ fn build_cli<'a, 'b>() -> App<'a, 'b> {
                 .help("Treat the input as textual, rather than JSON")
                 .short("t")
                 .long("textual"),
-            // workers: -w, --workers [1]
-            Arg::with_name("workers")
-                .help("Number of threads used to generate data")
-                .short("w")
-                .long("workers")
-                .takes_value(true)
-                .default_value("1"),
             // template: +required
             Arg::with_name("template")
                 .help("Template to control JSON generation")
