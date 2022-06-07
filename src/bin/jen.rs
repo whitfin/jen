@@ -54,11 +54,15 @@ fn run() -> Result<(), Error> {
 
     // construct a new generator to pull back from
     for document in Generator::from_path(template)? {
-        // attempt to detect JSON values and compact them
+        // attempt to compact JSON
         let output = (!textual)
+            // if it's enabled
             .then(|| &document)
-            .and_then(|created| serde_json::from_str::<Value>(created).ok())
-            .and_then(|parsed| serde_json::to_vec(&parsed).ok())
+            // by parsing the created document using serde_json
+            .and_then(|document| serde_json::from_str(document).ok())
+            // and then converting it back to a byte vector (compacted)
+            .and_then(|contents: Value| serde_json::to_vec(&contents).ok())
+            // and using the input bytes as a default
             .unwrap_or_else(|| document.into_bytes());
 
         // write entry to stdout
