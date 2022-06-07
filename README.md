@@ -36,7 +36,7 @@ as a dependency of your application:
 
 ```toml
 [dependencies]
-jen = { version = "1.1", default-features = false }
+jen = { version = "1.5", default-features = false }
 ```
 
 You should disable the default features as it includes several dependencies
@@ -78,22 +78,17 @@ FLAGS:
 
 OPTIONS:
     -l, --limit <limit>        An upper limit of documents to generate
-    -w, --workers <workers>    Number of threads used to generate data [default: 16]
 
 ARGS:
     <template>    Template to control JSON generation
 ```
 
-The Jen CLI was written under the assumption that you're dealing with JSON
-documents, and most of the options and features revolve around this being
-the case. If you're not using JSON, you can provide the `-t` flag to treat
-the incoming data as textual. In this case some options may have no effect,
-but templating can still be carried out properly.
-
-During development, Jen had options to combined and prettify JSON inputs.
-This was removed to keep things simple, and to allow Jen to support more
-input types. Instead it is recommended to use [jq](https://stedolan.github.io/jq/)
-for these purposes.
+Although Jen works with any input formatting, it was originally written
+with JSON documents in mind. As such, Jen will automically attempt to
+parse input (after generation) as JSON, in order to compact and emit
+documents once per line. This detection has a fair amount of overhead,
+which can be skipped by providing `-t` if you explicitly don't want to
+treat incoming data as JSON.
 
 For a complete and up to date list of options, please use `jen -h` in your
 terminal.
