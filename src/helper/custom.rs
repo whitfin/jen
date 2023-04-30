@@ -2,11 +2,13 @@
 use super::BoxedHelper;
 use bson::oid::ObjectId;
 use fake::fake;
+use nanoid::nanoid;
 use rand::Rng;
 use tera::{Result, Value};
 use uuid::Uuid;
 
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -19,6 +21,7 @@ pub fn helpers() -> Vec<(&'static str, BoxedHelper)> {
         ("float", Box::new(float)),
         ("index", Box::new(index)),
         ("integer", Box::new(integer)),
+        ("nanoid", Box::new(nanoid)),
         ("objectId", Box::new(object_id)),
         ("paragraph", Box::new(paragraph)),
         ("random", Box::new(random)),
@@ -75,6 +78,17 @@ fn integer(args: &HashMap<String, Value>) -> Result<Value> {
     let value = Value::from(value);
 
     Ok(value)
+}
+
+/// Generates a nanoid as a `String`.
+fn nanoid(args: &HashMap<String, Value>) -> Result<Value> {
+    let length = args
+        .get("length")
+        .and_then(|value| value.as_u64())
+        .and_then(|value| value.try_into().ok())
+        .unwrap_or(21);
+
+    Ok(Value::from(nanoid!(length)))
 }
 
 /// Generates an object identifier as a `String`.

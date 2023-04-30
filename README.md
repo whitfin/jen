@@ -135,6 +135,7 @@ documentation uploaded to Crates.io for an up-to-date listing.
 | latitude()                             | Generates a random latitude location value            |
 | longitude()                            | Generates a random longitude location value           |
 | name()                                 | Generates a random full name                          |
+| nanoid(length=21)                      | Generates a random nanoid of a given length           |
 | objectId()                             | Generates a random object identifier                  |
 | paragraph()                            | Generates a random paragraph of Lorem Ipsum           |
 | phone()                                | Generates a random phone number                       |
