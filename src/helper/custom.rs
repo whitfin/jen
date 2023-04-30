@@ -1,7 +1,7 @@
 //! Helper definitions provided by custom implementation.
 use super::BoxedHelper;
+use bson::oid::ObjectId;
 use fake::fake;
-use objectid::ObjectId;
 use rand::Rng;
 use tera::{Result, Value};
 use uuid::Uuid;
@@ -79,10 +79,7 @@ fn integer(args: &HashMap<String, Value>) -> Result<Value> {
 
 /// Generates an object identifier as a `String`.
 fn object_id(_args: &HashMap<String, Value>) -> Result<Value> {
-    ObjectId::new()
-        .map_err(|_| unreachable!())
-        .map(|id| id.to_string())
-        .map(Value::String)
+    Ok(Value::from(ObjectId::new().to_hex()))
 }
 
 /// Generates a paragraph of textual content.

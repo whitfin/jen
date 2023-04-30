@@ -17,7 +17,7 @@
 //! convenience bridge between them. Go check them out! If you want
 //! more than a CLI, you can also use `jen` programmatically.
 #![doc(html_root_url = "https://docs.rs/jen/1.5.0")]
-use clap::{Arg, Command};
+use clap::{value_parser, Arg, ArgAction, Command};
 use serde_json::Value;
 
 use jen::error::Error;
@@ -39,7 +39,7 @@ fn run() -> Result<(), Error> {
 
     // unpack various arguments from the CLI to use later on
     let limit = args.get_one::<usize>("limit");
-    let textual = args.contains_id("textual");
+    let textual = args.get_flag("textual");
     let template = args
         .get_one::<String>("template")
         .expect("template argument should be provided")
@@ -101,12 +101,14 @@ fn build_cli<'a>() -> Command {
                 .help("An upper limit of documents to generate")
                 .short('l')
                 .long("limit")
-                .num_args(1),
+                .num_args(1)
+                .value_parser(value_parser!(usize)),
             // textual: -t, --textual
             Arg::new("textual")
                 .help("Treat the input as textual, without JSON detection")
                 .short('t')
-                .long("textual"),
+                .long("textual")
+                .action(ArgAction::SetTrue),
             // template: +required
             Arg::new("template")
                 .help("Template to control generation format")
