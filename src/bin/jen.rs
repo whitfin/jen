@@ -38,10 +38,10 @@ fn run() -> Result<(), Error> {
     let args = build_cli().get_matches();
 
     // unpack various arguments from the CLI to use later on
-    let limit = args.value_of_t("limit").ok();
-    let textual = args.is_present("textual");
+    let limit = args.get_one::<usize>("limit");
+    let textual = args.contains_id("textual");
     let template = args
-        .value_of("template")
+        .get_one::<String>("template")
         .expect("template argument should be provided")
         .to_owned();
 
@@ -74,7 +74,7 @@ fn run() -> Result<(), Error> {
 
         // check the limit before next
         if let Some(limit) = limit {
-            if counter >= limit {
+            if &counter >= limit {
                 break;
             }
         }
@@ -88,7 +88,7 @@ fn run() -> Result<(), Error> {
 ///
 /// All command line usage information can be found in the definitions
 /// below, and follows the API of the `clap` library.
-fn build_cli<'a>() -> Command<'a> {
+fn build_cli<'a>() -> Command {
     Command::new("")
         // package metadata from cargo
         .name(env!("CARGO_PKG_NAME"))
@@ -101,7 +101,7 @@ fn build_cli<'a>() -> Command<'a> {
                 .help("An upper limit of documents to generate")
                 .short('l')
                 .long("limit")
-                .takes_value(true),
+                .num_args(1),
             // textual: -t, --textual
             Arg::new("textual")
                 .help("Treat the input as textual, without JSON detection")

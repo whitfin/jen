@@ -1,5 +1,5 @@
 # Jen
-[![Build Status](https://img.shields.io/github/workflow/status/whitfin/jen/CI)](https://github.com/whitfin/jen/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/whitfin/jen/ci.yml)](https://github.com/whitfin/jen/actions)
 [![Crates.io](https://img.shields.io/crates/v/jen.svg)](https://crates.io/crates/jen)
 
 A simple (but extensible) tool for generating large random datasets.
