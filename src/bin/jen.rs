@@ -16,7 +16,7 @@
 //! itself is simply a binding around these two crates to provide a
 //! convenience bridge between them. Go check them out! If you want
 //! more than a CLI, you can also use `jen` programmatically.
-#![doc(html_root_url = "https://docs.rs/jen/1.5.0")]
+#![doc(html_root_url = "https://docs.rs/jen/1.7.0")]
 use clap::{value_parser, Arg, ArgAction, Command};
 use serde_json::Value;
 
@@ -27,8 +27,8 @@ use std::io::{self, Write};
 
 /// Entry point of Jen.
 fn main() {
-    if let Err(e) = run() {
-        eprintln!("{}", e);
+    if let Err(ref err) = run() {
+        eprintln!("{}", err);
     }
 }
 
@@ -66,8 +66,17 @@ fn run() -> Result<(), Error> {
             .unwrap_or_else(|| document.into_bytes());
 
         // write entry to stdout
-        stdout.write_all(&output)?;
-        stdout.write_all(b"\n")?;
+        let result = stdout
+            .write_all(&output)
+            .and_then(|_| stdout.write_all(b"\n"));
+
+        // ignore broken pipe outputs
+        if let Err(ref err) = result {
+            if err.kind() == io::ErrorKind::BrokenPipe {
+                return Ok(());
+            }
+            result?;
+        }
 
         // keep track
         counter += 1;
