@@ -57,7 +57,7 @@ fn run() -> Result<(), Error> {
         // attempt to compact JSON
         let output = (!textual)
             // if it's enabled
-            .then(|| &document)
+            .then_some(&document)
             // by parsing the created document using serde_json
             .and_then(|document| serde_json::from_str(document).ok())
             // and then converting it back to a byte vector (compacted)
@@ -97,7 +97,7 @@ fn run() -> Result<(), Error> {
 ///
 /// All command line usage information can be found in the definitions
 /// below, and follows the API of the `clap` library.
-fn build_cli<'a>() -> Command {
+fn build_cli() -> Command {
     Command::new("")
         // package metadata from cargo
         .name(env!("CARGO_PKG_NAME"))
