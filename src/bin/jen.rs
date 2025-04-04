@@ -16,7 +16,7 @@
 //! itself is simply a binding around these two crates to provide a
 //! convenience bridge between them. Go check them out! If you want
 //! more than a CLI, you can also use `jen` programmatically.
-#![doc(html_root_url = "https://docs.rs/jen/1.7.0")]
+#![doc(html_root_url = "https://docs.rs/jen/1.7.1")]
 use clap::{value_parser, Arg, ArgAction, Command};
 use serde_json::Value;
 
